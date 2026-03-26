@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản Lý Tàu - Firebase (Filter + Summary)</title>
+<title>Quản Lý Tàu</title>
   
 <style>
 * {
@@ -63,8 +63,9 @@ button {
 
 /* TABLE RESPONSIVE */
 .table-wrap {
+  max-height: 650px;   /* ~10 dòng */
+  overflow-y: auto;
   overflow-x: auto;
-  padding-bottom: 5px;
 }
 
 /* Table */
@@ -170,18 +171,39 @@ tr:last-child td {
   color: #007bff;
   font-size: 15px;
 }
+
+  .ship-col {
+  width: 90px;
+  max-width: 90px;
+  white-space: nowrap;
+}
+
+.worker-col {
+  width: 60px;
+  max-width: 60px;
+  text-align: center;
+}
+
+.stt-col {
+  width: 40px;
+  max-width: 40px;
+  text-align: center;
+  padding: 4px !important;
+}
+
+
   
 </style>
 
 
   
 </head>
-<body><h2>🚢 Quản Lý Tàu (Filter + Tổng hợp)</h2><div class="card">
+<body><h2>🚢 Quản Lý Tàu</h2><div class="card">
 <h3>Chọn tàu</h3>
 <select id="ship">
 <option value="all">Tất cả</option>
-<option value="tau_01">Tàu 01</option>
-<option value="tau_02">Tàu 02</option>
+<option value="Casing S57106">Casing S57106</option>
+<option value="Casing J00106">Casing J00106</option>
 </select>
 </div><div class="card">
 <h3>Nhập công việc</h3>
@@ -199,13 +221,13 @@ tr:last-child td {
 </div>
   <select id="shipFilter">
   <option value="all">Tất cả tàu</option>
-  <option value="tau_01">Tàu 01</option>
-  <option value="tau_02">Tàu 02</option>
+<option value="Casing S57106">Casing S57106</option>
+<option value="Casing J00106">Casing J00106</option>
 </select>
 <input type="text" id="jobFilter" placeholder="Lọc theo công việc">
 <select id="sortType">
-  <option value="asc">📅 ↑ </option>
-  <option value="desc">📅 ↓ </option>
+  <option value="asc">📅 ↑ tăng dần </option>
+  <option value="desc">📅 ↓ giảm dần </option>
 </select>
 <button onclick="applyFilter()">Áp dụng lọc</button>
 </div><div class="card">
@@ -253,7 +275,10 @@ let editId = null;
 window.saveLog = function(){
 
   let data = {
-    ship_id: ship.value === 'all' ? 'tau_01' : ship.value,
+    if(ship.value === 'all'){
+  alert("Vui lòng chọn tàu!");
+  return;
+}
     date: date.value,
     workers: Number(workers.value),
     job: job.value
@@ -280,7 +305,14 @@ onValue(ref(db, "logs"), snapshot => {
 });
 
 function renderTable(dataObj){
-  let html = "<table><tr><th>Tàu</th><th>Ngày</th><th>Người</th><th>Công việc</th><th class='action-col'>Hành động</th></tr>";
+let html = "<table><tr>\
+<th class='stt-col'>STT</th>\
+<th class='ship-col'>Tàu</th>\
+<th>Ngày</th>\
+<th class='worker-col'>Người</th>\
+<th>Công việc</th>\
+<th class='action-col'>Hành động</th>\
+</tr>";
 
   let sortType = document.getElementById("sortType").value;
 
@@ -291,15 +323,17 @@ function renderTable(dataObj){
   });
 
   let totalWorkers = 0; // 👉 tổng người
+  let index = 1;
 
   sorted.forEach(([id, x])=>{
     totalWorkers += Number(x.workers || 0);
 
-    html += `<tr>
-      <td class="small-col">${x.ship_id}</td>
-      <td class="date-col">${x.date}</td>
-      <td class="small-col">${x.workers}</td>
-      <td class="job-col">${x.job}</td>
+ html += `<tr>
+  <td class="stt-col">${index++}</td>
+  <td class="ship-col">${x.ship_id}</td>
+  <td class="date-col">${x.date}</td>
+  <td class="worker-col">${x.workers}</td>
+  <td class="job-col">${x.job}</td>
       <td class="action-col">
         <div class="action-buttons">
           <button onclick="editItem('${id}')">✏️</button>
@@ -312,7 +346,7 @@ function renderTable(dataObj){
   // 👉 THÊM HÀNG TỔNG
   html += `
     <tr style="background:#f1f1f1; font-weight:bold;">
-      <td colspan="2">TỔNG</td>
+      <td colspan="3">TỔNG</td>
       <td>${totalWorkers}</td>
       <td colspan="2"></td>
     </tr>
