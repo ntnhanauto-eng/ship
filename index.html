@@ -4,13 +4,94 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quản Lý Tàu - Firebase (Filter + Summary)</title>
 <style>
-body { font-family: Arial; padding: 10px; background:#f5f5f5 }
-.card { background:#fff; padding:15px; margin-bottom:10px; border-radius:10px }
-input, select, button { width:100%; margin:5px 0; padding:8px }
-button { background:#007bff; color:white; border:none; border-radius:5px }
-table { width:100%; border-collapse: collapse; margin-top:10px }
-th, td { border:1px solid #ddd; padding:8px; text-align:center }
-.flex { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial;
+  margin: 0;
+  padding: 10px;
+  background: #f5f5f5;
+}
+
+/* Tiêu đề */
+h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+/* Card full width */
+.card {
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Input full mobile */
+input, select, button {
+  width: 100%;
+  margin: 6px 0;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+/* Button đẹp hơn */
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+}
+
+/* Grid mobile → 1 cột */
+.flex {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+/* Tablet trở lên */
+@media(min-width: 600px){
+  .flex {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* TABLE RESPONSIVE */
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 500px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Nút trong bảng */
+td button {
+  padding: 5px 8px;
+  font-size: 12px;
+  margin: 2px;
+}
+
+/* Sticky header (rất hữu ích mobile) */
+th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
 </style>
 </head>
 <body><h2>🚢 Quản Lý Tàu (Filter + Tổng hợp)</h2><div class="card">
@@ -36,7 +117,9 @@ th, td { border:1px solid #ddd; padding:8px; text-align:center }
 <button onclick="applyFilter()">Áp dụng lọc</button>
 </div><div class="card">
 <h3>Dữ liệu</h3>
-<div id="table"></div>
+<div class="table-wrap">
+  <div id="table"></div>
+</div>
 </div><div class="card">
 <h3>Tổng hợp</h3>
 <button onclick="showSummary()">Tổng hợp</button>
