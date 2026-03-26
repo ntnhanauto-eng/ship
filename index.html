@@ -294,6 +294,11 @@ window.deleteItem = function(id){
 window.editItem = function(id){
   let x = rawData[id];
 
+  if(!x){
+    alert("Không tìm thấy dữ liệu!");
+    return;
+  }
+
   ship.value = x.ship_id;
   date.value = x.date;
   workers.value = x.workers;
