@@ -43,24 +43,21 @@ th, td { border:1px solid #ddd; padding:8px; text-align:center }
 <div id="summary"></div>
 </div>
   
-  <script type="module">
+ <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSy...",
   authDomain: "ship-90534.firebaseapp.com",
   databaseURL: "https://ship-90534-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ship-90534",
-  storageBucket: "ship-90534.firebasestorage.app",
-  messagingSenderId: "414371290775",
-  appId: "1:414371290775:web:b791eebfacf3e32f1b13d2"
+  projectId: "ship-90534"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// LẤY DOM (QUAN TRỌNG)
+// DOM
 const ship = document.getElementById("ship");
 const date = document.getElementById("date");
 const workers = document.getElementById("workers");
@@ -74,68 +71,53 @@ const table = document.getElementById("table");
 const summary = document.getElementById("summary");
 
 let rawData = {};
+let editId = null;
 
-// Lưu dữ liệu
+// ================= SAVE =================
 window.saveLog = function(){
-  push(ref(db, "logs"), {
+
+  let data = {
     ship_id: ship.value === 'all' ? 'tau_01' : ship.value,
     date: date.value,
     workers: Number(workers.value),
     job: job.value
-  });
-  alert("Đã lưu Firebase");
+  };
+
+  if(editId){
+    // UPDATE
+    update(ref(db, "logs/" + editId), data);
+    editId = null;
+    alert("Đã cập nhật");
+  }else{
+    // CREATE
+    push(ref(db, "logs"), data);
+    alert("Đã lưu");
+  }
+
+  clearForm();
 }
 
-// Load dữ liệu realtime
+// ================= LOAD =================
 onValue(ref(db, "logs"), snapshot => {
   rawData = snapshot.val() || {};
-  renderTable(Object.values(rawData));
+  renderTable(rawData);
 });
 
-// FILTER
-window.applyFilter = function(){
-  let data = Object.values(rawData);
+// ================= TABLE =================
+function renderTable(dataObj){
 
-  let from = fromDate.value;
-  let to = toDate.value;
-  let jobF = jobFilter.value.trim().toLowerCase();
-  let shipF = ship.value;
+  let html = "<table><tr><th>Tàu</th><th>Ngày</th><th>Người</th><th>Công việc</th><th>Hành động</th></tr>";
 
-  let filtered = data.filter(x=>{
-    let ok = true;
-
-    if(shipF !== 'all'){
-      ok = ok && (x.ship_id === shipF);
-    }
-
-    if(from){
-      ok = ok && (x.date >= from);
-    }
-
-    if(to){
-      ok = ok && (x.date <= to);
-    }
-
-    if(jobF){
-      ok = ok && (x.job && x.job.toLowerCase().includes(jobF));
-    }
-
-    return ok;
-  });
-
-  renderTable(filtered);
-}
-
-// HIỂN THỊ TABLE
-function renderTable(data){
-  let html = "<table><tr><th>Tàu</th><th>Ngày</th><th>Người</th><th>Công việc</th></tr>";
-
-  data.forEach(x=>{
+  Object.entries(dataObj).forEach(([id, x])=>{
     html += `<tr>
       <td>${x.ship_id}</td>
       <td>${x.date}</td>
       <td>${x.workers}</td>
       <td>${x.job}</td>
+      <td>
+        <button onclick="editItem('${id}')">Sửa</button>
+        <button onclick="deleteItem('${id}')">Xoá</button>
+      </td>
     </tr>`;
   });
 
@@ -143,13 +125,55 @@ function renderTable(data){
   table.innerHTML = html;
 }
 
-// TỔNG HỢP
-window.showSummary = function(){
-  let data = Object.values(rawData);
+// ================= DELETE =================
+window.deleteItem = function(id){
+  if(confirm("Xoá dữ liệu này?")){
+    remove(ref(db, "logs/" + id));
+  }
+}
 
+// ================= EDIT =================
+window.editItem = function(id){
+  let x = rawData[id];
+
+  ship.value = x.ship_id;
+  date.value = x.date;
+  workers.value = x.workers;
+  job.value = x.job;
+
+  editId = id;
+}
+
+// ================= FILTER =================
+window.applyFilter = function(){
+  let data = Object.entries(rawData);
+
+  let from = fromDate.value;
+  let to = toDate.value;
+  let jobF = jobFilter.value.toLowerCase();
+  let shipF = ship.value;
+
+  let filtered = {};
+
+  data.forEach(([id, x])=>{
+    let ok = true;
+
+    if(shipF !== 'all') ok = ok && x.ship_id === shipF;
+    if(from) ok = ok && x.date >= from;
+    if(to) ok = ok && x.date <= to;
+    if(jobF) ok = ok && x.job.toLowerCase().includes(jobF);
+
+    if(ok) filtered[id] = x;
+  });
+
+  renderTable(filtered);
+}
+
+// ================= SUMMARY =================
+window.showSummary = function(){
   let result = {};
 
-  data.forEach(x=>{
+  Object.values(rawData).forEach(x=>{
     if(!result[x.ship_id]){
       result[x.ship_id] = {
         totalWorkers:0,
@@ -168,6 +192,13 @@ window.showSummary = function(){
   }
 
   summary.innerHTML = html;
+}
+
+// ================= CLEAR FORM =================
+function clearForm(){
+  date.value = "";
+  workers.value = "";
+  job.value = "";
 }
 </script>
 </body>
