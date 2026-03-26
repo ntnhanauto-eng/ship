@@ -3,6 +3,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quản Lý Tàu - Firebase (Filter + Summary)</title>
+  
 <style>
 * {
   box-sizing: border-box;
@@ -92,6 +93,39 @@ th {
   top: 0;
   background: #fff;
 }
+/* Canh trái toàn bộ dữ liệu */
+td {
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Riêng tiêu đề vẫn ở giữa */
+th {
+  text-align: center;
+}
+
+/* Cột công việc xuống dòng đẹp */
+.job-col {
+  max-width: 140px;      /* Giới hạn chiều ngang */
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Cột nhỏ lại cho mobile */
+.small-col {
+  width: 70px;
+  white-space: nowrap;
+}
+
+/* Cột ngày */
+.date-col {
+  width: 100px;
+  white-space: nowrap;
+}
+
+
+
+  
 </style>
 </head>
 <body><h2>🚢 Quản Lý Tàu (Filter + Tổng hợp)</h2><div class="card">
@@ -186,18 +220,16 @@ onValue(ref(db, "logs"), snapshot => {
   renderTable(rawData);
 });
 
-// ================= TABLE =================
 function renderTable(dataObj){
-
   let html = "<table><tr><th>Tàu</th><th>Ngày</th><th>Người</th><th>Công việc</th><th>Hành động</th></tr>";
 
   Object.entries(dataObj).forEach(([id, x])=>{
     html += `<tr>
-      <td>${x.ship_id}</td>
-      <td>${x.date}</td>
-      <td>${x.workers}</td>
-      <td>${x.job}</td>
-      <td>
+      <td class="small-col">${x.ship_id}</td>
+      <td class="date-col">${x.date}</td>
+      <td class="small-col">${x.workers}</td>
+      <td class="job-col">${x.job}</td>
+      <td class="small-col">
         <button onclick="editItem('${id}')">Sửa</button>
         <button onclick="deleteItem('${id}')">Xoá</button>
       </td>
