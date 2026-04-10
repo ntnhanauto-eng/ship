@@ -113,6 +113,41 @@ input[type="date"] {
     margin-bottom: 3px;
 }
 
+/* Fix bảng giờ công mobile */
+#workHoursBox {
+    overflow-x: auto;
+}
+
+#workHoursBox table {
+    min-width: 400px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#workHoursBox th, 
+#workHoursBox td {
+    padding: 8px;
+    font-size: 13px;
+    text-align: center;
+}
+
+#workHoursBox input {
+    padding: 8px;
+    font-size: 13px;
+    width: 100%;
+    min-width: 80px;
+    box-sizing: border-box;
+}
+
+/* Nút nhỏ lại cho mobile */
+#workHoursBox button {
+    padding: 6px;
+    font-size: 12px;
+}
+
+
+
+        
         
     </style>
 </head>
@@ -404,7 +439,7 @@ input[type="date"] {
     }
 
     function renderWorkHoursInputs(){
-        let ships = ["S571", "J002", "S577", "S579"];
+        let ships = ["J002", "S571", "S577", "S579"];
         let html = "<table><tr><th>Tàu</th><th>Giờ PP</th><th>Lưu</th></tr>";
         ships.forEach(s => {
             let key = s.replace(/\s/g,'_');
