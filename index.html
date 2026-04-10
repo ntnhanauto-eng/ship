@@ -218,6 +218,7 @@ input[type="date"] {
         <div class="flex">
             <button id="btnSummary" onclick="showSummary()">📊 Xem BÁO CÁO</button>
             <button id="btnWorkHours" class="admin-only" onclick="toggleWorkHours()">⏱️ Giờ Công Tàu</button>
+            <button onclick="exportExcel()">📥 Xuất Excel</button>
         </div>
         
         <div id="summary" style="display:none; margin-top:15px;"></div>
@@ -248,6 +249,7 @@ input[type="date"] {
     let ppData = {};
     let editId = null;
     let isAdmin = false;
+    let currentFiltered = [];
 
     // --- XỬ LÝ ĐĂNG NHẬP ---
     window.handleAuth = function() {
@@ -341,6 +343,7 @@ input[type="date"] {
             let d2 = new Date(b[1].date);
             return sortType === "asc" ? d1 - d2 : d2 - d1;
         });
+        currentFiltered = filteredArray;
 
         renderTableUI(filteredArray);
     }
@@ -491,12 +494,45 @@ else if(efficiency >= 70) color = "orange";
     document.getElementById("fromDate").addEventListener("input", applyFilter);
     document.getElementById("toDate").addEventListener("input", applyFilter);
 
+// xuất Excel
+window.exportExcel = function() {
+    let data = [];
+
+    currentFiltered.forEach(([id, x]) => {
+        data.push({
+            "Tàu": x.ship_id,
+            "Ngày": x.date,
+            "Số người": x.workers,
+            "Công việc": x.job || ""
+        });
+    });
+
+data.push({
+    "Tàu": "TỔNG",
+    "Ngày": "",
+    "Số người": data.reduce((sum, r) => sum + r["Số người"], 0),
+    "Công việc": ""
+});
 
 
+
+    
+    if(data.length === 0){
+        alert("Không có dữ liệu để xuất!");
+        return;
+    }
+
+    let ws = XLSX.utils.json_to_sheet(data);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
+
+    XLSX.writeFile(wb, "BaoCao_Loc.xlsx");
+}
 
 
 
     
 </script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </body>
 </html>
