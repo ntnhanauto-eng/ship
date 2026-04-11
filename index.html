@@ -203,7 +203,7 @@ h2 {
 
 /* Định dạng riêng cho bảng quản lý tàu */
 #shipListContent table {
-    width: 100%;
+    width: 80%;
     margin-top: 10px;
     border-collapse: collapse;
     background: #fff;
@@ -217,20 +217,102 @@ h2 {
 
 /* Thu nhỏ cột nút xóa */
 #shipListContent td:last-child {
-    width: 60px;
+    width: 35px;
     text-align: center;
 }
 
 /* Làm nút xóa nhỏ gọn và canh giữa */
 #shipListContent .btn-delete {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     line-height: 35px;
     padding: 0;
     margin: 0 auto;
     display: block;
     font-size: 14px;
 }        
+
+/* Khung quản lý tàu chuyên dụng */
+#shipManagerBox {
+    border: 1px solid #28a745;
+    background: #ffffff;
+}
+
+.ship-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.ship-input-group input {
+    flex: 2; /* Ô nhập chiếm 2 phần */
+    margin: 0;
+}
+
+.ship-input-group button {
+    flex: 1; /* Nút bấm chiếm 1 phần */
+    margin: 0;
+    background: #28a745;
+    white-space: nowrap;
+}
+
+/* Bảng danh sách tàu */
+.ship-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ship-table th {
+    background: #f8f9fa;
+    color: #333;
+    font-size: 13px;
+    padding: 10px;
+    border-bottom: 2px solid #28a745;
+}
+
+.ship-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.ship-table .ship-name {
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+.btn-delete-small {
+    background: #dc3545 !important;
+    width: 35px !important;
+    height: 35px !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    margin: 0 auto !important;
+}
+
+/* Nút active khi đang mở */
+.btn-active {
+    background: #28a745 !important; /* xanh lá */
+    color: #fff !important;
+}
+
+/* Màu riêng từng nút (optional đẹp hơn) */
+#btnSummary.btn-active {
+    background: #17a2b8 !important; /* xanh dương nhạt */
+}
+
+#btnWorkHours.btn-active {
+    background: #ffc107 !important; /* vàng */
+    color: #000 !important;
+}
+
+#btnManageShips.btn-active {
+    background: #28a745 !important; /* xanh lá */
+}
+
         
         
     </style>
@@ -370,15 +452,37 @@ function renderShipSelects() {
     filterSelect.innerHTML = filterOptions;
 }
 
+function resetActiveButtons() {
+    document.getElementById("btnSummary").classList.remove("btn-active");
+    document.getElementById("btnWorkHours").classList.remove("btn-active");
+    document.getElementById("btnManageShips").classList.remove("btn-active");
+}
+
+
+
+    
 // 3. Hàm Đóng/Mở khung quản lý tàu
 window.toggleShipManager = function() {
     const box = document.getElementById("shipManagerBox");
-    box.style.display = (box.style.display === "none") ? "block" : "none";
-    if(box.style.display === "block") {
-        renderShipManagerList();
-        document.getElementById("summary").style.display = "none";
-        document.getElementById("workHoursBox").style.display = "none";
+    const btn = document.getElementById("btnManageShips");
+
+    const isOpen = box.style.display === "block";
+
+    resetActiveButtons();
+
+    if(isOpen){
+        box.style.display = "none";
+        btn.classList.remove("btn-active");
+        return;
     }
+
+    box.style.display = "block";
+    btn.classList.add("btn-active");
+
+    renderShipManagerList();
+
+    document.getElementById("summary").style.display = "none";
+    document.getElementById("workHoursBox").style.display = "none";
 }
 
 // 4. Hàm Thêm tàu mới lên Firebase
@@ -403,14 +507,25 @@ window.deleteShip = function(shipId) {
 
 // 6. Hàm hiển thị danh sách tàu kèm nút Xóa
 function renderShipManagerList() {
-    let html = `<table><tr><th>Tên Tàu</th><th style="width:60px">Xóa</th></tr>`;
+    let html = `<table>
+        <thead>
+            <tr>
+                <th>Tên Tàu</th>
+                <th>Xóa</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    
     Object.keys(shipsData).sort().forEach(shipId => {
         html += `<tr>
-            <td><b>${shipId}</b></td>
-            <td><button class="btn-delete" onclick="deleteShip('${shipId}')" style="margin:0; padding:5px;">🗑️</button></td>
+            <td style="font-weight: bold;">${shipId}</td>
+            <td>
+                <button class="btn-delete" onclick="deleteShip('${shipId}')">🗑️</button>
+            </td>
         </tr>`;
     });
-    html += "</table>";
+    
+    html += "</tbody></table>";
     document.getElementById("shipListContent").innerHTML = html;
 }
 
@@ -562,52 +677,79 @@ function renderShipManagerList() {
         }
     }
 
-    window.showSummary = function(){
-        const box = document.getElementById("summary");
-        box.style.display = (box.style.display === "none") ? "block" : "none";
-        if(box.style.display === "none") return;
+  window.showSummary = function(){
+    const box = document.getElementById("summary");
+    const btn = document.getElementById("btnSummary");
 
-        let result = {};
-        Object.values(rawData).forEach(x => {
-            if(!result[x.ship_id]) result[x.ship_id] = { totalWorkers:0 };
-            result[x.ship_id].totalWorkers += Number(x.workers);
-        });
+    const isOpen = box.style.display === "block";
 
-        let html = "<h4>📊 Báo cáo tổng hợp</h4>";
-        for(let s in result){
-            let key = s.replace(/\s/g,'_');
-            let savedPP = ppData[key]?.hours || 0;
-            let realHours = result[s].totalWorkers * 8;
-            let efficiency = 0;
-if(realHours > 0){
-    efficiency = (savedPP / realHours) * 100;
+    // reset tất cả nút
+    resetActiveButtons();
+
+    if(isOpen){
+        box.style.display = "none";
+        btn.classList.remove("btn-active");
+        return;
+    }
+
+    box.style.display = "block";
+    btn.classList.add("btn-active");
+
+    document.getElementById("workHoursBox").style.display = "none";
+    document.getElementById("shipManagerBox").style.display = "none";
+
+    let result = {};
+    Object.values(rawData).forEach(x => {
+        if(!result[x.ship_id]) result[x.ship_id] = { totalWorkers:0 };
+        result[x.ship_id].totalWorkers += Number(x.workers);
+    });
+
+    let html = "<h4>📊 Báo cáo tổng hợp</h4>";
+    for(let s in result){
+        let key = s.replace(/\s/g,'_');
+        let savedPP = ppData[key]?.hours || 0;
+        let realHours = result[s].totalWorkers * 8;
+
+        let efficiency = realHours > 0 ? (savedPP / realHours) * 100 : 0;
+
+        let color = "red";
+        if(efficiency >= 100) color = "green";
+        else if(efficiency >= 70) color = "orange";
+
+        html += `<div class="summary-item">
+            <b>🚢 Tàu: ${s}</b><br>
+            - Tổng nhân công: ${result[s].totalWorkers} lượt người<br>
+            - Tổng giờ thực tế: ${realHours.toLocaleString()} giờ<br>
+            - Giờ định mức PP: <b>${savedPP.toLocaleString()}</b> giờ<br>
+            - Hiệu quả tàu: <b style="color:${color}">${efficiency.toFixed(1)}%</b>
+        </div>`;
+    }
+
+    box.innerHTML = html;
 }
 
-      let color = "red";
-if(efficiency >= 100) color = "green";
-else if(efficiency >= 70) color = "orange";
+  window.toggleWorkHours = function(){
+    const box = document.getElementById("workHoursBox");
+    const btn = document.getElementById("btnWorkHours");
 
-            
-           html += `<div class="summary-item">
-    <b>🚢 Tàu: ${s}</b><br>
-    - Tổng nhân công: ${result[s].totalWorkers} lượt người<br>
-    - Tổng giờ thực tế: ${realHours.toLocaleString()} giờ<br>
-    - Giờ định mức PP: <b>${savedPP.toLocaleString()}</b> giờ<br>
-    - Hiệu quả tàu: <b style="color:${color}">${efficiency.toFixed(1)}%</b>
-</div>`;
-        }
-        box.innerHTML = html;
-        document.getElementById("workHoursBox").style.display = "none";
+    const isOpen = box.style.display === "block";
+
+    resetActiveButtons();
+
+    if(isOpen){
+        box.style.display = "none";
+        btn.classList.remove("btn-active");
+        return;
     }
 
-    window.toggleWorkHours = function(){
-        const box = document.getElementById("workHoursBox");
-        box.style.display = (box.style.display === "none") ? "block" : "none";
-        if(box.style.display === "block") {
-            renderWorkHoursInputs();
-            document.getElementById("summary").style.display = "none";
-        }
-    }
+    box.style.display = "block";
+    btn.classList.add("btn-active");
+
+    renderWorkHoursInputs();
+
+    document.getElementById("summary").style.display = "none";
+    document.getElementById("shipManagerBox").style.display = "none";
+}
 
    function renderWorkHoursInputs(){
     // Lấy danh sách tàu thực tế từ shipsData thay vì ghi tay
