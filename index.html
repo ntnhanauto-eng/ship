@@ -410,10 +410,10 @@ input, select {
         <h2>🚢 E/R CASING</h2>
         <button id="authBtn" onclick="handleAuth()">🔐 Admin Đăng Nhập</button>
     </div>
-
+    
     <div class="card admin-only">
         <h3>Nhập Dữ Liệu</h3>
-       <div class="date-row">
+         <div class="date-row">
     <div class="date-field">
         <label for="date">Chọn ngày</label>
         <input type="date" id="date">
@@ -432,7 +432,23 @@ input, select {
         </div>
         <button class="btn-save" onclick="saveLog()">💾 Lưu Thông Tin</button>
     </div>
-
+   <div class="card" id="upcomingEventsBox">
+    <h3>📅 Công việc 7 ngày tới</h3>
+    <div class="table-wrap">
+        <table id="upcomingEventsTable">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Ngày</th>
+                    <th style="width: 70px;">Tàu</th>
+                    <th>Nội dung công việc</th>
+                </tr>
+            </thead>
+            <tbody id="upcomingEventsBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+    
    <div class="card">
     <h3>Bộ Lọc & Tìm Kiếm</h3>
     <div class="date-row">
@@ -669,6 +685,7 @@ function renderShipManagerList() {
     onValue(ref(db, "logs"), snapshot => {
         rawData = snapshot.val() || {};
         applyFilter();
+        renderUpcomingEvents(); // <--- Dòng này giúp bảng tự cập nhật ngay khi mở web hoặc khi Boss sửa dữ liệu
     });
 
     onValue(ref(db, "workHours"), snapshot => {
@@ -703,6 +720,39 @@ renderTableUI();
 renderPagination();
     }
 
+// --- HÀM RENDER CÔNG VIỆC 7 NGÀY TỚI ---
+function renderUpcomingEvents() {
+    const today = new Date();
+    const sevenDaysLater = new Date();
+    sevenDaysLater.setDate(today.getDate() + 7);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const sevenDaysStr = sevenDaysLater.toISOString().split('T')[0];
+
+    const upcomingEvents = Object.entries(rawData)
+        .filter(([id, item]) => item.date >= todayStr && item.date <= sevenDaysStr)
+        .sort((a, b) => new Date(a[1].date) - new Date(b[1].date));
+
+    const tbody = document.getElementById("upcomingEventsBody");
+    if (!tbody) return;
+
+    let html = "";
+    if (upcomingEvents.length === 0) {
+        html = "<tr><td colspan='3' style='text-align:center;'>Không có lịch trong 7 ngày tới.</td></tr>";
+    } else {
+        upcomingEvents.forEach(([id, item]) => {
+            html += `<tr>
+                <td style="white-space:nowrap; font-size:12px;">${item.date}</td>
+                <td style="font-weight:bold;">${item.ship_id}</td>
+                <td>${item.job}</td>
+            </tr>`;
+        });
+    }
+    tbody.innerHTML = html;
+}
+
+
+    
     function renderTableUI() {
 
     let start = (currentPage - 1) * rowsPerPage;
@@ -874,10 +924,18 @@ html += `
 
 // xuất Excel
 window.exportExcel = function() {
+
+    if (currentFiltered.length === 0) {
+        alert("Không có dữ liệu để xuất!");
+        return;
+    }
+
     let data = [];
 
-    currentFiltered.forEach(([id, x]) => {
+    // ===== DỮ LIỆU =====
+    currentFiltered.forEach(([id, x], index) => {
         data.push({
+            "STT": index + 1,
             "Tàu": x.ship_id,
             "Ngày": x.date,
             "Số người": x.workers,
@@ -885,23 +943,63 @@ window.exportExcel = function() {
         });
     });
 
+    // ===== TÍNH TỔNG =====
+    let total = data.reduce((sum, r) => sum + r["Số người"], 0);
+
     data.push({
-        "Tàu": "TỔNG",
-        "Ngày": "",
-        "Số người": data.reduce((sum, r) => sum + r["Số người"], 0),
-        "Công việc": ""
+        "STT": "",
+        "Tàu": "",
+        "Ngày": "TỔNG",
+        "Số người": total,
+        "Công việc": "người"
     });
 
-    if(data.length === 0){
-        alert("Không có dữ liệu để xuất!");
-        return;
+    // ===== TẠO SHEET =====
+    let ws = XLSX.utils.json_to_sheet(data);
+
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    // ===== STYLE HEADER =====
+    for (let c = range.s.c; c <= range.e.c; c++) {
+        let cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
+        if (cell) {
+            cell.s = {
+                font: { bold: true },
+                alignment: { horizontal: "center" }
+            };
+        }
     }
 
-    let ws = XLSX.utils.json_to_sheet(data);
+    // ===== STYLE DÒNG TỔNG =====
+    let totalRowIndex = data.length - 1;
+    for (let c = range.s.c; c <= range.e.c; c++) {
+        let cell = ws[XLSX.utils.encode_cell({ r: totalRowIndex, c })];
+        if (cell) {
+            cell.s = {
+                font: { bold: true },
+                alignment: { horizontal: "center" }
+            };
+        }
+    }
+
+    // ===== AUTO WIDTH =====
+    ws['!cols'] = [
+        { wch: 6 },   // STT
+        { wch: 10 },  // Tàu
+        { wch: 12 },  // Ngày
+        { wch: 12 },  // Số người
+        { wch: 35 }   // Công việc
+    ];
+
+    // ===== WORKBOOK =====
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "BaoCao");
 
-    let wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    let wbout = XLSX.write(wb, {
+        bookType: "xlsx",
+        type: "array",
+        cellStyles: true
+    });
 
     let blob = new Blob([wbout], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -909,26 +1007,29 @@ window.exportExcel = function() {
 
     let url = URL.createObjectURL(blob);
 
-    // 🔥 TẠO LINK MỚI MỖI LẦN
     let a = document.createElement("a");
     a.href = url;
-    a.download = "BaoCaoCasing_" + Date.now() + ".xlsx"; // tránh trùng tên
-    a.style.display = "none";
+
+    // ===== TÊN FILE (KHÔNG TRÙNG) =====
+    let now = new Date();
+
+    let date = now.toISOString().slice(0, 10); // yyyy-mm-dd
+    let time = now.toTimeString().slice(0, 8).replace(/:/g, "-"); // hh-mm-ss
+
+    a.download = `BaoCao_Casing_${date}_${time}.xlsx`;
 
     document.body.appendChild(a);
 
-    // 🔥 BẮT BUỘC dùng setTimeout cho mobile
     setTimeout(() => {
         a.click();
 
-        // cleanup sau khi click
         setTimeout(() => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }, 1000);
 
     }, 100);
-}
+};
 
 
 window.closeLogin = function(){
