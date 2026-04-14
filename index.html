@@ -464,13 +464,16 @@ input, select {
     width: 100% !important;
     height: 300px !important;
 }    
-  .auto-textarea {
+ .auto-textarea {
     width: 100%;
-    min-height: 100px;   /* min như hiện tại */
-    max-height: 500px;   /* max */
-    overflow-y: auto;    /* scroll khi vượt */
-    resize: none;        /* không cho kéo tay */
-    line-height: 1.4;
+    min-height: 100px;
+    max-height: 500px;
+    overflow-y: auto;
+    resize: none;
+
+    font-size: 16px;      /* 🔥 tăng chữ */
+    line-height: 1.6;     /* 🔥 dễ đọc hơn */
+    padding: 10px;        /* 🔥 thoáng hơn */
 }
    .auto-textarea {
     width: 100%;
@@ -1877,21 +1880,21 @@ window.renderExtraDetail = function(){
 
     let readonly = isAdmin ? "" : "readonly";
 
-    let html = `
+   let html = `
     <div style="margin-bottom:20px;">
         <h4>📦 Vật tư</h4>
-      <textarea id="matBox" class="auto-textarea mat-box" ${readonly}></textarea>
+        <textarea id="matBox" class="auto-textarea mat-box" ${readonly}>${materials}</textarea>
 
         ${isAdmin ? `<button onclick="saveMaterial()">💾 Lưu vật tư</button>` : ""}
     </div>
 
     <div>
         <h4>📝 Ghi chú</h4>
-      <textarea id="noteBox" class="auto-textarea note-box" ${readonly}></textarea>
+        <textarea id="noteBox" class="auto-textarea note-box" ${readonly}>${notes}</textarea>
 
         ${isAdmin ? `<button onclick="saveNote()">💾 Lưu ghi chú</button>` : ""}
     </div>
-    `;
+`;
 
     document.getElementById("extraDetail").innerHTML = html;
     document.getElementById("extraDetail").innerHTML = html;
