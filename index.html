@@ -724,7 +724,10 @@ input, select {
 }
 
 
-
+.highlight-layer {
+    white-space: pre-wrap;
+    line-height: 22px;
+}
 
 
 
@@ -2229,20 +2232,23 @@ function updateHighlight(textId, highlightId, keyword) {
 
     let text = textarea.value;
 
-    if (!keyword) {
-        layer.innerHTML = text;
-        return;
+    // 🔥 QUAN TRỌNG: giữ nguyên xuống dòng bằng &nbsp;
+    let html = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
+
+    if (keyword) {
+        const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${safeKeyword})`, "gi");
+        html = html.replace(regex, "<mark>$1</mark>");
     }
 
-    // escape ký tự đặc biệt
-    const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 🔥 FIX DÒNG TRỐNG
+    html = html.replace(/(<br>\s*){2,}/g, "<br>&nbsp;<br>");
 
-    const regex = new RegExp(`(${safeKeyword})`, "gi");
-
-    let highlighted = text.replace(regex, "<mark>$1</mark>");
-
-   layer.innerHTML = highlighted
-    .replace(/\n$/g, "\n\n"); // fix dòng cuối bị lệch
+    layer.innerHTML = html;
 }
 
  window.saveMaterial = function(){
