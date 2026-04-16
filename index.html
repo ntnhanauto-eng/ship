@@ -738,7 +738,7 @@ input, select {
 button:hover {
     transform: translateY(-2px) scale(1.03);
 
-    background: #0b3d91; /* 🔥 xanh blue đậm */
+  /*  background: #0b3d91; /* 🔥 xanh blue đậm */ */
 
     box-shadow:
         0 8px 25px rgba(0,0,0,0.35),
@@ -822,7 +822,7 @@ button {
 
     <hr>
 
-    <h4>📋 Nhắc nhở kiểm tra còn sót</h4>
+    <h4>📋 HẠNG MỤC KIỂM TRA:</h4>
     <div id="dashboardChecklist"></div>
 </div>
     
@@ -960,6 +960,17 @@ button {
     </div>
 
 <script type="module">
+
+    
+    // cài đặt web lên màn hình
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registered!'))
+        .catch(err => console.log('Service Worker registration failed: ', err));
+    });
+  }
+
     let openedShip = null;
     let logoutTimer = null;
     // Thay vì valueAsDate, dùng cách thủ công để định dạng chắc chắn là YYYY-MM-DD
@@ -2420,7 +2431,7 @@ document.getElementById("dashboardSummary").innerHTML = html;
         checkHTML = "✔ Tất cả tàu đã có checklist";
     } else {
         missingChecklist.forEach(s => {
-            checkHTML += `⚠️ <b>${s}</b> chưa có hạng mục kiểm tra<br>`;
+            checkHTML += `⚠️ <b>${s}</b> chưa có<br>`;
         });
     }
 
@@ -2443,7 +2454,7 @@ if (warn.length === 0) {
 
 document.getElementById("dashboardChecklist").innerHTML += `
 <hr>
-<b>🚨 Cảnh báo thiếu checklist</b><br>
+<b>🚨 TRẠNG THÁI KIỂM TRA:</b><br>
 ${warnHTML}
 `;    
 }
