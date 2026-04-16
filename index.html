@@ -687,7 +687,37 @@ input, select {
     line-height: 20px !important;
 }
 
+.dash-row {
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
 
+.dash-row:hover {
+    background: #e8f0fe;
+}
+
+.dash-detail {
+    padding-left: 15px;
+    margin-bottom: 6px;
+}
+
+.detail-row {
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+.detail-total {
+    font-weight: bold;
+    margin-top: 5px;
+    color: #1a73e8;
+}
+
+.empty {
+    font-style: italic;
+    color: #888;
+}
 
 
 
@@ -858,6 +888,7 @@ input, select {
     </div>
 
 <script type="module">
+    let openedShip = null;
     let logoutTimer = null;
     // Thay vì valueAsDate, dùng cách thủ công để định dạng chắc chắn là YYYY-MM-DD
 const today = new Date();
@@ -1123,7 +1154,7 @@ function renderUpcomingEvents() {
             html += `<tr>
                 <td style="white-space:nowrap; font-size:12px;">${item.date}</td>
                 <td style="font-weight:bold;">${item.ship_id}</td>
-                <td>${item.job}</td>
+               <td>${(item.job || "").replace(/^PLAN:\s*/i, "")}</td>
             </tr>`;
         });
     }
@@ -2258,28 +2289,42 @@ const today = `${yyyy}-${mm}-${dd}`;
     let shipMap = {}; // { ship: workers }
 
     // ===== 1. TÍNH NHÂN LỰC HÔM NAY THEO TÀU =====
-    Object.values(rawData).forEach(x => {
-        if (x.date === today) {
-            if (!shipMap[x.ship_id]) shipMap[x.ship_id] = 0;
-            shipMap[x.ship_id] += Number(x.workers || 0);
-        }
-    });
+   // ===== 1. TÍNH NHÂN LỰC HÔM NAY THEO TÀU =====
+Object.values(rawData).forEach(x => {
+    if (x.date === today) {
+        if (!shipMap[x.ship_id]) shipMap[x.ship_id] = 0;
+        shipMap[x.ship_id] += Number(x.workers || 0);
+    }
+});
 
-    let totalWorkers = 0;
-    let html = "";
+let totalWorkers = 0;
+let html = "";
+
+// 👉 kiểm tra trước khi loop
+if (Object.keys(shipMap).length === 0) {
+
+    html = "Không có dữ liệu hôm nay";
+
+} else {
 
     Object.keys(shipMap).forEach(ship => {
         totalWorkers += shipMap[ship];
-        html += `🚢 <b>${ship}</b>: ${shipMap[ship]} người<br>`;
+
+        html += `
+        <div class="dash-row" onclick="toggleShipDetail('${ship}')">
+            🚢 <b>${ship}</b>: ${shipMap[ship]} người
+        </div>
+
+        <div id="detail-${ship}" class="dash-detail"></div>
+        `;
     });
 
-    if (Object.keys(shipMap).length === 0) {
-        html = "Không có dữ liệu hôm nay";
-    }
-
+    // 👉 chỉ thêm tổng 1 lần (ngoài loop)
     html += `<hr><b>Tổng nhân lực: ${totalWorkers} người</b>`;
+}
 
-    document.getElementById("dashboardSummary").innerHTML = html;
+// 👉 render 1 lần duy nhất
+document.getElementById("dashboardSummary").innerHTML = html;
 
 
     // ===== 2. NHẮC CHECKLIST CHƯA CÓ =====
@@ -2327,6 +2372,69 @@ document.getElementById("dashboardChecklist").innerHTML += `
 ${warnHTML}
 `;    
 }
+
+window.toggleShipDetail = function(ship) {
+
+    const box = document.getElementById("detail-" + ship);
+
+    // 👉 nếu đang mở → đóng lại
+    if (box.innerHTML.trim() !== "") {
+        box.innerHTML = "";
+        openedShip = null;
+        return;
+    }
+
+    // 👉 đóng tàu cũ nếu có
+    if (openedShip && openedShip !== ship) {
+        const oldBox = document.getElementById("detail-" + openedShip);
+        if (oldBox) oldBox.innerHTML = "";
+    }
+
+    openedShip = ship;
+
+    // 👉 lấy ngày chuẩn (KHÔNG bị lệch timezone)
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const today = `${yyyy}-${mm}-${dd}`;
+
+    // 🔥 debug nếu cần
+    console.log("TODAY:", today);
+
+    // 👉 lọc dữ liệu
+    const result = Object.entries(rawData).filter(([id, x]) => {
+        return x.ship_id === ship && x.date === today;
+    });
+
+    // 👉 render
+    let html = "";
+
+    if (result.length === 0) {
+        html = `<div class="empty">Không có dữ liệu hôm nay</div>`;
+    } else {
+
+        let total = 0;
+
+        result.forEach(([id, x]) => {
+
+            total += Number(x.workers || 0);
+
+            let jobText = (x.job || "").replace(/PLAN:/gi, "").trim();
+
+            html += `
+                <div class="detail-row">
+                    👷 ${x.workers} người — ${jobText}
+                </div>
+            `;
+        });
+
+        html += `<div class="detail-total">Tổng: ${total} người</div>`;
+    }
+
+    box.innerHTML = html;
+}
+                                 
 
     function getChecklistWarnings() {
     let warnings = [];
