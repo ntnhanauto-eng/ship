@@ -796,7 +796,7 @@ button {
     overflow: hidden;
 }
 
-        
+ 
         
     </style>
 </head>
@@ -934,8 +934,15 @@ button {
         <div id="shipManagerBox" class="card admin-only" style="display:none; margin-top:15px;">
     <h4>Quản Lý Danh Sách Tàu</h4>
     <div class="flex">
-        <input type="text" id="newShipName" placeholder="Nhập tên tàu mới (VD: S580)">
-        <button onclick="addShip()">➕ Thêm Tàu</button>
+       <input type="text" id="newShipName" placeholder="Nhập tên tàu mới (VD: S580)">
+
+<select id="shipGroup">
+    <option value="">-- Không gán nhóm --</option>
+    <option value="EO1">EO1</option>
+    <option value="EO2">EO2</option>
+</select>
+
+<button onclick="addShip()">➕ Thêm Tàu</button>
     </div>           
     <div id="shipListContent" style="margin-top:10px; overflow-x:auto;"></div>
 </div>
@@ -1106,12 +1113,19 @@ window.toggleShipManager = function() {
 // 4. Hàm Thêm tàu mới lên Firebase
 window.addShip = function() {
     const name = document.getElementById("newShipName").value.trim().toUpperCase();
+    const group = document.getElementById("shipGroup").value; // 👈 thêm dòng này
+
     if(!name) return alert("Vui lòng nhập tên tàu!");
     if(shipsData[name]) return alert("Tàu này đã tồn tại!");
-    
-    set(ref(db, "ships/" + name), { name: name })
+
+    set(ref(db, "ships/" + name), {
+        name: name,
+        group: group || null   // 👈 lưu null nếu không chọn
+    })
     .then(() => {
         document.getElementById("newShipName").value = "";
+        document.getElementById("shipGroup").value = "";
+
         alert("Đã thêm tàu " + name);
     });
 }
@@ -1122,28 +1136,58 @@ window.deleteShip = function(shipId) {
         remove(ref(db, "ships/" + shipId));
     }
 }
+ window.updateShipGroup = function(shipId, groupVal) {
 
+    // giữ nguyên name cũ
+    const shipName = shipsData[shipId]?.name || shipId;
+
+    set(ref(db, "ships/" + shipId), {
+        name: shipName,
+        group: groupVal || ""
+    })
+    .then(() => {
+        console.log("Đã cập nhật nhóm cho", shipId);
+    });
+}
+
+    
 // 6. Hàm hiển thị danh sách tàu kèm nút Xóa
 function renderShipManagerList() {
-    let html = `<table><tr><th>Tên Tàu</th><th style="width:60px">Xóa</th></tr>`;
+
+    let html = `<table><tr>
+    <th>Tên Tàu</th>
+    <th>Nhóm</th>
+    <th style="width:60px">Xóa</th>
+</tr>`;
     Object.keys(shipsData).sort().forEach(shipId => {
-       html += `<tr>
-    <td><b>${shipId}</b></td>
+
+        let group = shipsData[shipId]?.group || "-";
+
+      html += `
+<tr>
+    <td>${shipId}</td>
+
     <td>
-        <button class="btn-delete" 
+        <select onchange="updateShipGroup('${shipId}', this.value)">
+            <option value="">-- Chọn --</option>
+            <option value="EO1" ${shipsData[shipId]?.group === "EO1" ? "selected" : ""}>EO1</option>
+            <option value="EO2" ${shipsData[shipId]?.group === "EO2" ? "selected" : ""}>EO2</option>
+        </select>
+    </td>
+
+    <td>
+        <button class="btn-delete"
             onclick="deleteShip('${shipId}')"
-            style="
-                margin:0;
-                padding:4px 6px;
-                width:auto;
-                font-size:12px;
-            ">
+            style="margin:0; padding:4px 6px; width:auto; font-size:12px;">
             🗑️
         </button>
     </td>
-</tr>`;
+</tr>
+`;
     });
+
     html += "</table>";
+
     document.getElementById("shipListContent").innerHTML = html;
 }
 
