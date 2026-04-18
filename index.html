@@ -1285,14 +1285,19 @@ document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
 }
 
 // 1. Lắng nghe danh sách tàu từ Firebase
+// Lắng nghe danh sách tàu từ Firebase
 onValue(ref(db, "ships"), snapshot => {
     shipsData = snapshot.val() || {};
-    renderShipSelects(); // Cập nhật các ô chọn tàu
-    // Nếu đang mở bảng quản lý tàu thì vẽ lại bảng đó luôn
-    if(document.getElementById("shipManagerBox").style.display === "block") {
+    renderShipSelects(); 
+    
+    // Kiểm tra nếu khung quản lý tàu đang mở thì vẽ lại bảng
+    const shipBox = document.getElementById("shipManagerBox");
+    if(shipBox && shipBox.style.display === "block") {
         renderShipManagerList();
-        renderDashboard();
     }
+    
+    // Cập nhật lại dashboard nếu cần
+    renderDashboard();
 });
 
     onValue(ref(db, "progress"), snapshot => {
@@ -1335,24 +1340,23 @@ window.toggleShipManager = function() {
 // 4. Hàm Thêm tàu mới lên Firebase
 window.addShip = function() {
     const name = document.getElementById("newShipName").value.trim().toUpperCase();
-    const group = document.getElementById("shipGroup").value; // 👈 thêm dòng này
+    const group = document.getElementById("shipGroup").value;
 
     if(!name) return alert("Vui lòng nhập tên tàu!");
     if(shipsData[name]) return alert("Tàu này đã tồn tại!");
 
-   set(ref(db, "ships/" + name), {
-    name: name,
-    group: group || null,
-    status: "active" // 🔥 thêm dòng này
-})
+    set(ref(db, "ships/" + name), {
+        name: name,
+        group: group || null,
+        status: "active",
+        deliveryDate: "" // Khởi tạo rỗng
+    })
     .then(() => {
         document.getElementById("newShipName").value = "";
         document.getElementById("shipGroup").value = "";
-
         alert("Đã thêm tàu " + name);
     });
 }
-
 // 5. Hàm Xóa tàu khỏi danh sách
 window.deleteShip = function(shipId) {
     if(confirm(`Xác nhận xóa tàu ${shipId}?`)) {
@@ -1373,76 +1377,93 @@ window.deleteShip = function(shipId) {
     });
 }
 window.updateShipStatus = function(shipId, statusVal) {
-
     const shipName = shipsData[shipId]?.name || shipId;
     const group = shipsData[shipId]?.group || "";
+    
+    // Tạo biến lưu ngày bàn giao
+    let deliveryDate = shipsData[shipId]?.deliveryDate || "";
+
+    if (statusVal === "done") {
+        // Nếu chuyển sang bàn giao mà chưa có ngày thì gán ngày hôm nay
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        deliveryDate = `${dd}/${mm}/${yyyy}`; 
+    } else {
+        // Nếu chuyển ngược lại "Đang làm", xóa ngày bàn giao
+        deliveryDate = "";
+    }
 
     set(ref(db, "ships/" + shipId), {
         name: shipName,
         group: group,
-        status: statusVal
+        status: statusVal,
+        deliveryDate: deliveryDate // Lưu vào Firebase
     })
     .then(() => {
-        console.log("Đã cập nhật trạng thái", shipId);
+        console.log("Đã cập nhật trạng thái và ngày bàn giao cho", shipId);
     });
 }
     
 // 6. Hàm hiển thị danh sách tàu kèm nút Xóa
 function renderShipManagerList() {
-
     let html = `<table><tr>
-   <th>Tên Tàu</th>
-<th>Nhóm</th>
-<th>Trạng thái</th>
-<th style="width:60px">Xóa</th>
-</tr>`;
+        <th>Tên Tàu</th>
+        <th>Nhóm</th>
+        <th>Trạng thái</th>
+        <th style="width:130px">Ngày bàn giao</th>
+        <th style="width:60px">Xóa</th>
+    </tr>`;
+
     Object.keys(shipsData).sort().forEach(shipId => {
+        const ship = shipsData[shipId];
+        const dDate = ship.deliveryDate || ""; // Định dạng YYYY-MM-DD để input date hiểu được
 
-        let group = shipsData[shipId]?.group || "-";
-
-     html += `
-<tr>
-    <td>${shipId}</td>
-
-    <td>
-        <select onchange="updateShipGroup('${shipId}', this.value)">
-            <option value="">-- Chọn --</option>
-            <option value="EO1" ${shipsData[shipId]?.group === "EO1" ? "selected" : ""}>EO1</option>
-            <option value="EO2" ${shipsData[shipId]?.group === "EO2" ? "selected" : ""}>EO2</option>
-        </select>
-    </td>
-
-    <!-- 🔥 THÊM CỘT NÀY -->
-    <td>
-        <select onchange="updateShipStatus('${shipId}', this.value)">
-            <option value="active"
-                ${(shipsData[shipId]?.status || "active") === "active" ? "selected" : ""}>
-                Đang làm
-            </option>
-
-            <option value="done"
-                ${shipsData[shipId]?.status === "done" ? "selected" : ""}>
-                ✅ Đã bàn giao
-            </option>
-        </select>
-    </td>
-
-    <td>
-        <button class="btn-delete"
-            onclick="deleteShip('${shipId}')"
-            style="margin:0; padding:4px 6px; width:auto; font-size:12px;">
-            🗑️
-        </button>
-    </td>
-</tr>
-`;
+        html += `
+        <tr>
+            <td>${shipId}</td>
+            <td>
+                <select onchange="updateShipGroup('${shipId}', this.value)">
+                    <option value="">-- Chọn --</option>
+                    <option value="EO1" ${ship.group === "EO1" ? "selected" : ""}>EO1</option>
+                    <option value="EO2" ${ship.group === "EO2" ? "selected" : ""}>EO2</option>
+                </select>
+            </td>
+            <td>
+                <select onchange="updateShipStatus('${shipId}', this.value)">
+                    <option value="active" ${(ship.status || "active") === "active" ? "selected" : ""}>Đang làm</option>
+                    <option value="done" ${ship.status === "done" ? "selected" : ""}>✅ Đã bàn giao</option>
+                </select>
+            </td>
+            <td>
+                <input type="date" 
+                       value="${dDate}" 
+                       onchange="updateShipDeliveryDate('${shipId}', this.value)"
+                       style="padding: 4px; font-size: 12px; border: 1px solid #ccc;">
+            </td>
+            <td>
+                <button class="btn-delete" onclick="deleteShip('${shipId}')" style="margin:0; padding:4px 6px; width:auto; font-size:12px;">🗑️</button>
+            </td>
+        </tr>`;
     });
 
     html += "</table>";
-
     document.getElementById("shipListContent").innerHTML = html;
 }
 
+    window.updateShipDeliveryDate = function(shipId, dateVal) {
+    const ship = shipsData[shipId];
+    
+    // Cập nhật ngày lên Firebase mà không làm thay đổi các thông tin khác
+    update(ref(db, "ships/" + shipId), {
+        deliveryDate: dateVal
+    })
+    .then(() => {
+        console.log("Đã cập nhật ngày bàn giao mới cho", shipId);
+    })
+    .catch(err => alert("Lỗi cập nhật ngày: " + err.message));
+}
     // --- XỬ LÝ ĐĂNG NHẬP ---
   window.handleAuth = function() {
     if (isAdmin) {
@@ -1919,55 +1940,66 @@ setTimeout(() => {
     updateChartData(data, ship);
 }
 
-function renderSummaryDetail(ship){
+function renderSummaryDetail(ship) {
     const box = document.getElementById("summaryDetail");
     const result = window.summaryDataCache;
 
     let html = "";
 
     Object.keys(result).forEach(s => {
+        if (ship !== "all" && s !== ship) return;
 
-        if(ship !== "all" && s !== ship) return;
-
-        let key = s.replace(/\s/g,'_');
+        let key = s.replace(/\s/g, '_');
         let savedPP = ppData[key]?.hours || 0;
         let realHours = result[s].totalWorkers * 8;
 
         let efficiency = 0;
-        if(realHours > 0){
+        if (realHours > 0) {
             efficiency = (savedPP / realHours) * 100;
         }
+        
         let progress = progressData[key]?.percent || 0;
         let checkedItems = progressData[key]?.items || [];
-let checkedText = checkedItems.length > 0 
-    ? checkedItems.join(", ") 
-    : "Chưa có";
+        let checkedText = checkedItems.length > 0 ? checkedItems.join(", ") : "Chưa có";
 
         let color = "red";
-        if(efficiency >= 100) color = "green";
-        else if(efficiency >= 70) color = "orange";
+        if (efficiency >= 100) color = "green";
+        else if (efficiency >= 70) color = "orange";
+
+        // --- XỬ LÝ HIỂN THỊ TRẠNG THÁI VÀ NGÀY BÀN GIAO ---
+        let shipInfo = shipsData[s] || {};
+        let group = shipInfo.group || "-";
+        let isDone = shipInfo.status === "done";
         
-let group = shipsData[s]?.group || "-";
+        let statusText = isDone ? "Đã bàn giao" : "Đang làm";
+        let statusColor = isDone ? "#188038" : "#1a73e8"; // Xanh lá nếu xong, xanh dương nếu đang làm
+        
+        // Chỉ hiện ngày bàn giao nếu tàu đã bàn giao và có dữ liệu ngày
+        let deliveryDateText = "";
+        if (isDone && shipInfo.deliveryDate) {
+            // Chuyển định dạng YYYY-MM-DD sang DD/MM/YYYY cho dễ nhìn
+            const d = shipInfo.deliveryDate.split("-");
+            const formattedDate = (d.length === 3) ? `${d[2]}/${d[1]}/${d[0]}` : shipInfo.deliveryDate;
+            deliveryDateText = ` - ${formattedDate}`;
+        }
 
-// 🔥 xác định trạng thái
-let isDone = shipsData[s]?.status === "done";
-let statusText = isDone ? "Đã bàn giao" : "Đang làm";
-let statusColor = isDone ? "#188038" : "#1a73e8"; // xanh lá / xanh dương
-
-html += `
-<div class="summary-item">
-    <b>
-        🚢 Tàu: ${s} (${group}) 
-        - <span style="color:${statusColor}">${statusText}</span>
-    </b><br>
-    - Tổng nhân công: ${result[s].totalWorkers} lượt người<br>
-    - Tổng giờ thực tế: ${realHours.toLocaleString()} giờ<br>
-    - Giờ định mức PP: <b>${savedPP.toLocaleString()}</b> giờ<br>
-    - Hiệu quả tàu: <b style="color:${color}">${efficiency.toFixed(1)} %</b><br>
-    - Tiến độ thực tế: <b style="color:#1a73e8">${progress} %</b>
-    <br>
-- Các hạng mục đã kiểm tra: <b>${checkedText}</b>
-</div>`;
+        html += `
+        <div class="summary-item">
+            <div style="font-size: 15px; margin-bottom: 8px;">
+                <b style="color: #333;">🚢 Tàu: ${s} (${group})</b> 
+                <span style="color: ${statusColor}; font-weight: bold;">
+                    - ${statusText}${deliveryDateText}
+                </span>
+            </div>
+            <div style="padding-left: 15px; line-height: 1.6;">
+                - Tổng nhân công: <b>${result[s].totalWorkers}</b> lượt người<br>
+                - Tổng giờ thực tế: <b>${realHours.toLocaleString()}</b> giờ<br>
+                - Giờ định mức PP: <b>${savedPP.toLocaleString()}</b> giờ<br>
+                - Hiệu quả tàu: <b style="color:${color}">${efficiency.toFixed(1)} %</b><br>
+                - Tiến độ thực tế: <b style="color:#1a73e8">${progress} %</b><br>
+                - Các hạng mục đã kiểm tra: <b>${checkedText}</b>
+            </div>
+        </div>`;
     });
 
     box.innerHTML = html;
