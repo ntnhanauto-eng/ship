@@ -1184,8 +1184,8 @@ button {
                 <label>1. Trạng thái:</label>
                 <select id="filterStatus" onchange="updateShipSelectByStatus()">
                     <option value="all">-- Tất cả --</option>
-                    <option value="done">TÀU BÀN GIAO</option>
-                    <option value="active">ĐANG LÀM</option>
+                    <option value="done">ĐÃ BÀN GIAO</option>
+                    <option value="active">ĐANG THI CÔNG</option>
                 </select>
             </div>
             <div class="date-field">
@@ -1195,7 +1195,7 @@ button {
                 </select>
             </div>
         </div>
-        <div id="summaryDetailContainer" style="max-height: 450px; overflow-y: auto;"></div> 
+        <div id="summaryDetailContainer" style="max-height: 700px; overflow-y: auto;"></div> 
         <div style="margin-top:20px;">
             <canvas id="summaryChart"></canvas>
         </div>
@@ -1490,7 +1490,7 @@ function renderShipManagerList() {
             </td>
             <td>
                 <select onchange="updateShipStatus('${shipId}', this.value)">
-                    <option value="active" ${(ship.status || "active") === "active" ? "selected" : ""}>Đang làm</option>
+                    <option value="active" ${(ship.status || "active") === "active" ? "selected" : ""}>Đang thi công</option>
                     <option value="done" ${ship.status === "done" ? "selected" : ""}>✅ Đã bàn giao</option>
                 </select>
             </td>
@@ -1834,7 +1834,7 @@ window.showGeneralSummaryReport = function() {
                 <b style="font-size:20px;">${done}</b>
             </div>
             <div style="background:#e8f0fe; border:1px solid #1a73e8; padding:10px; border-radius:10px; color:#1a73e8;">
-                <div style="font-size:11px;">ĐANG LÀM</div>
+                <div style="font-size:11px;">THI CÔNG</div>
                 <b style="font-size:20px;">${active}</b>
             </div>
         </div>`;
@@ -1877,7 +1877,7 @@ window.renderSummaryDetail = function(selectedShip) {
         let colorClass = efficiency >= 100 ? "#188038" : (efficiency >= 75 ? "#f9ab00" : "#d93025");
         
         let progress = progressData[key]?.percent || 0;
-        let checkedItems = (progressData[key]?.items || []).join(", ") || "Chưa có checklist";
+        let checkedItems = (progressData[key]?.items || []).join(", ") || "Chưa có";
         let isDone = shipInfo.status === "done";
 
         // Logic xử lý ngày bàn giao
@@ -2967,7 +2967,7 @@ let infoHTML = `
     </div>
 
     <div class="info-box">
-        <div class="info-header">ĐANG LÀM</div>
+        <div class="info-header">THI CÔNG</div>
         <div class="info-body">
             ${activeShips}
         </div>
@@ -3121,7 +3121,7 @@ setInterval(() => {
                 <div style="font-size: 20px; font-weight: bold; color: #1e8e3e;">${done}</div>
             </div>
             <div style="background: #e8f0fe; padding: 10px; border-radius: 8px; border: 1px solid #1a73e8;">
-                <div style="font-size: 12px; color: #1a73e8;">ĐANG LÀM</div>
+                <div style="font-size: 12px; color: #1a73e8;">THI CÔNG</div>
                 <div style="font-size: 20px; font-weight: bold; color: #1a73e8;">${active}</div>
             </div>
         </div>
