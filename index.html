@@ -1041,7 +1041,11 @@ button {
     background: #e8f0fe; /* Màu nền tiêu đề nhẹ nhàng hơn */
     color: #1a73e8;
 }
-  
+  #jobTableWrapper {
+    max-height: 635px;   /* 👈 đúng 13 hàng */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+}
         
     </style>
 </head>
@@ -1270,8 +1274,11 @@ button {
         <p style="margin-top:0; font-weight:bold;">➕ Thêm/Sửa công việc:</p>
         <div class="flex">
             <select id="jobShip"><option value="">-- Chọn tàu --</option></select>
+            <input type="text" id="jobBlock" placeholder="BLOCK">
             <input type="text" id="jobPor" placeholder="POR">
+            <input type="text" id="jobPartNo" placeholder="PART NO">
             <input type="text" id="jobName" placeholder="Tên vật tư">
+            <input type="number" id="jobQty" placeholder="QUANTITY">
             <input type="text" id="jobType" placeholder="Loại mistake">
         </div>
         <div class="date-row">
@@ -1288,10 +1295,14 @@ button {
         <thead>
             <tr>
                 <th style="width: 45px; text-align: center;">STT</th>
+                <th style="width: 60px;">BLOCK</th>
                 <th style="width: 100px;">POR</th>
+                <th style="width: 100px;">PART NO</th>
                 
     
-                <th style="width: 250px;">TÊN VẬT TƯ</th> <th style="width: 120px;">LOẠI</th>
+                <th style="width: 300px;">TÊN VẬT TƯ</th>
+                <th style="width: 60px;">QUANTITY</th>
+                <th style="width: 120px;">LOẠI</th>
                 <th style="width: 100px; text-align: center;">VẬT TƯ VỀ</th>
                 <th style="width: 100px; text-align: center;">NGÀY XONG</th>
                 <th style="width: 200px;">GHI CHÚ</th>
@@ -3226,17 +3237,22 @@ window.updateShipSelectByStatus = function() {
 
 window.saveJobData = function() {
     if(!isAdmin) return;
+
     const data = {
         ship: document.getElementById("jobShip").value,
+        block: document.getElementById("jobBlock").value,   // ✅ NEW
         por: document.getElementById("jobPor").value,
+        partNo: document.getElementById("jobPartNo").value, // ✅ NEW
         name: document.getElementById("jobName").value,
+        qty: document.getElementById("jobQty").value,       // ✅ NEW
         type: document.getElementById("jobType").value,
         matDate: document.getElementById("jobMatDate").value,
         doneDate: document.getElementById("jobDoneDate").value,
         note: document.getElementById("jobNote").value
     };
 
-    if(!data.ship || !data.name) return alert("Vui lòng nhập Tàu và Tên công việc!");
+    if(!data.ship || !data.name) 
+        return alert("Vui lòng nhập Tàu và Tên công việc!");
 
     if(editJobId) {
         update(ref(db, "jobs/" + editJobId), data).then(() => {
@@ -3288,22 +3304,25 @@ window.renderJobList = function() {
             html = `<tr><td colspan='8' style='text-align:center; padding:20px;'>Tàu <b>${selectedShip}</b> hiện không có công việc tồn đọng.</td></tr>`;
         } else {
             filteredJobs.forEach(([id, j]) => {
-                html += `<tr>
-                    <td>${index++}</td>
-                    <td>${j.por || "-"}</td>
-                    <td style="font-weight:bold;">${j.name}</td>
-                    <td>${j.type || "-"}</td>
-                    <td>${j.matDate || "-"}</td>
-                    <td>${j.doneDate || "-"}</td>
-                    <td style="font-size:12px; color:#555;">${j.note || ""}</td>
-                    <td class="admin-inline">
-                        <div class="action-buttons">
-                            <button class="btn-edit" onclick="editJob('${id}')">✏️</button>
-                            <button class="btn-delete" onclick="deleteJob('${id}')">🗑️</button>
-                        </div>
-                    </td>
-                </tr>`;
-            });
+    html += `<tr>
+        <td>${index++}</td>
+        <td>${j.block || "-"}</td>        <!-- NEW -->
+        <td>${j.por || "-"}</td>
+        <td>${j.partNo || "-"}</td>      <!-- NEW -->
+        <td style="font-weight:bold;">${j.name}</td>
+        <td>${j.qty || "-"}</td>         <!-- NEW -->
+        <td>${j.type || "-"}</td>
+        <td>${j.matDate || "-"}</td>
+        <td>${j.doneDate || "-"}</td>
+        <td style="font-size:12px; color:#555;">${j.note || ""}</td>
+        <td class="admin-inline">
+            <div class="action-buttons">
+                <button class="btn-edit" onclick="editJob('${id}')">✏️</button>
+                <button class="btn-delete" onclick="deleteJob('${id}')">🗑️</button>
+            </div>
+        </td>
+    </tr>`;
+});
         }
     }
     document.getElementById("jobListContent").innerHTML = html;
@@ -3311,13 +3330,18 @@ window.renderJobList = function() {
 
 window.editJob = function(id) {
     const j = jobsData[id];
+
     document.getElementById("jobShip").value = j.ship;
+    document.getElementById("jobBlock").value = j.block || "";
     document.getElementById("jobPor").value = j.por;
+    document.getElementById("jobPartNo").value = j.partNo || "";
     document.getElementById("jobName").value = j.name;
+    document.getElementById("jobQty").value = j.qty || "";
     document.getElementById("jobType").value = j.type;
     document.getElementById("jobMatDate").value = j.matDate;
     document.getElementById("jobDoneDate").value = j.doneDate;
     document.getElementById("jobNote").value = j.note;
+
     editJobId = id;
     document.getElementById("btnSaveJob").innerText = "💾 Cập nhật";
 };
@@ -3327,7 +3351,17 @@ window.deleteJob = function(id) {
 };
 
 function clearJobForm() {
-    ["jobPor", "jobName", "jobType", "jobMatDate", "jobDoneDate", "jobNote"].forEach(id => document.getElementById(id).value = "");
+    [
+        "jobBlock",
+        "jobPor",
+        "jobPartNo",
+        "jobName",
+        "jobQty",
+        "jobType",
+        "jobMatDate",
+        "jobDoneDate",
+        "jobNote"
+    ].forEach(id => document.getElementById(id).value = "");
 }
     
 </script>
