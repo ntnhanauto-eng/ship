@@ -1295,12 +1295,7 @@ button {
 <div id="jobManagerBox" class="card" style="display:none; margin-top:15px;">
     <h4>📋 CÔNG VIỆC CÒN LẠI TỪ GIAI ĐOẠN TRƯỚC</h4>
     
-    <div style="margin-bottom: 15px; background: #e8f0fe; padding: 10px; border-radius: 8px;">
-        <label style="font-weight: bold; color: #1a73e8;">🚢 Chọn tàu để xem công việc:</label>
-        <select id="viewJobByShip" onchange="renderJobList()">
-            <option value="">-- Chọn tàu --</option>
-        </select>
-    </div>
+   
 
     <div class="admin-only" style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd;">
         <p style="margin-top:0; font-weight:bold;">➕ Thêm/Sửa công việc:</p>
@@ -1341,13 +1336,16 @@ button {
         <button onclick="saveJobData()" id="btnSaveJob" style="background: #28a745;">💾 Lưu dữ liệu</button>
     </div>
 
-    
-    <div class="table-wrap">
+     <div style="margin-bottom: 15px; background: #e8f0fe; padding: 10px; border-radius: 8px;">
+        <label style="font-weight: bold; color: #1a73e8;">🚢 Chọn tàu để xem công việc:</label>
+        <select id="viewJobByShip" onchange="renderJobList()">
+            <option value="">-- Chọn tàu --</option>
+        </select>
+    </div>
 
-   <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
 
-    <!-- 🔎 TẦNG 1: LOẠI MISTAKE -->
-       <label style="font-weight: bold; color: #1a73e8;">Chọn loại mistakec:</label>
+      <!-- 🔎 TẦNG 1: LOẠI MISTAKE -->
+       <label style="font-weight: bold; color: #1a73e8;">2. Chọn loại mistakec:</label>
     <select id="filterMistake" onchange="filterJobList()">
         <option value="">-- Tất cả loại mistake --</option>
         <option value="DESIGN MISTAKE">Design mistake</option>
@@ -1359,16 +1357,24 @@ button {
         <option value="KHÁC">Khác</option>
     </select>
 
-    <!-- 🔎 TẦNG 2: TRẠNG THÁI -->
-        <label style="font-weight: bold; color: #1a73e8;">Chọn trạng thái:</label>
+     <!-- 🔎 TẦNG 2: TRẠNG THÁI -->
+        <label style="font-weight: bold; color: #1a73e8;">3. Chọn trạng thái:</label>
     <select id="filterJobStatus" onchange="filterJobList()">
         <option value="">-- Tất cả trạng thái --</option>
-        <option value="pending">⚪ Chưa làm</option>
-        <option value="doing">🔴 Đang làm</option>
+        <option value="pending">🔴 Chưa làm</option>
+        <option value="doing">🟡 Đang làm</option>
         <option value="done">🟢 Đã xong</option>
     </select>
-<button onclick="exportFilteredJobs()">📤 Xuất Excel</button>
-</div>
+    
+     <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+      <button onclick="exportFilteredJobs()">📤 Xuất Excel</button>
+      </div>
+
+    
+    <div class="table-wrap">
+
+ 
+
 
 
         
@@ -1393,6 +1399,7 @@ button {
         </thead>
         <tbody id="jobListContent"></tbody>
     </table>
+        </div>
 </div>
 
 </div>
