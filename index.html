@@ -1256,9 +1256,9 @@ button {
             <div id="pagination" class="pagination"></div>
         </div>
     
-   <div style="text-align: right; margin-top: 15px;">
+   <div class="admin-only" style="text-align: left; margin-top: 15px;">
         <button onclick="exportExcel()" style="background:#28a745; width: auto; padding: 10px 20px;">
-            📥 Xuất Excel (Theo kết quả lọc)
+            📥 Xuất Dữ liệu
         </button>
     </div>
 </div>
@@ -1402,10 +1402,12 @@ button {
         <option value="done">🟢 Đã xong</option>
     </select>
      </div>
-     <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-      <button onclick="exportFilteredJobs()">📤 Xuất Excel Remain Jobs</button>
+      <div class="admin-only" style="text-align: left; margin-top: 15px;">
+      <button onclick="exportFilteredJobs()" style="background:#28a745; width: auto; padding: 10px 20px;">📤 Xuất Excel Remain Jobs</button>
       </div>
 
+
+        
     
     <div class="table-wrap">
 
@@ -1470,11 +1472,17 @@ button {
              
     </div>
 
-      <div style="margin-bottom: 15px; display: flex; justify-content: flex-start;">
-    <button onclick="exportCommentToExcel()" style="width: auto; background: #188038; padding: 8px 20px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+      <div class="admin-only" style="text-align: left; margin-top: 15px;">
+    <button onclick="exportCommentToExcel()" style="background:#28a745; width: auto; padding: 10px 20px;">
         📤 Xuất Excel Comment
     </button>
 </div>
+
+
+
+
+
+
       
     <div class="table-wrap">
         <table id="commentTable" style="width: 100%; min-width: 1000px; table-layout: auto;">
