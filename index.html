@@ -1338,7 +1338,10 @@ button {
                 <option value="EO1">EO1</option>
                 <option value="EO2">EO2</option>
             </select>
-            <button onclick="addShip()">➕ Thêm</button>
+           <button onclick="addShip()" 
+    style="width:auto; padding:6px 12px; display:block; margin:10px auto;">
+    ➕ Thêm
+</button>
         </div>
         <div id="shipListContent" style="margin-top:10px;"></div>
     </div>
@@ -2954,7 +2957,11 @@ window.renderExtraDetail = function(){
         <textarea id="matBox" class="auto-textarea mat-box" ${readonly}>${materials}</textarea>
     </div>
 
-    ${isAdmin ? `<button onclick="saveMaterial()">💾 Lưu vật tư</button>` : ""}
+    ${isAdmin ? `<div style="text-align:center; margin-top:8px;">
+    <button onclick="saveMaterial()" style="width:auto; padding:6px 12px;">
+        💾 Lưu vật tư
+    </button>
+</div>` : ""}
 </div>
 
 <div>
@@ -2965,7 +2972,11 @@ window.renderExtraDetail = function(){
         <textarea id="noteBox" class="auto-textarea note-box" ${readonly}>${notes}</textarea>
     </div>
 
-    ${isAdmin ? `<button onclick="saveNote()">💾 Lưu ghi chú</button>` : ""}
+    ${isAdmin ? `<div style="text-align:center; margin-top:10px;">
+    <button onclick="saveNote()" style="width:auto; padding:6px 12px;">
+        💾 Lưu ghi chú
+    </button>
+</div>` : ""}
 </div>
 `;
 
